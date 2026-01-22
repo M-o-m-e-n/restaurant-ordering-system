@@ -3,15 +3,15 @@ import argon2 from 'argon2';
 import prisma from '../config/database';
 import redis from '../config/redis';
 import config from '../config';
-import { logger } from '../config/logger';
+import { logger } from '@config/logger';
 import {
   UnauthorizedError,
   BadRequestError,
   ConflictError,
   NotFoundError
-} from '../utils/errors';
-import { generateOTP } from '../utils/helpers';
-import { sha256 } from '../utils/crypto';
+} from '@utils/errors';
+import { generateOTP } from '@utils/helpers';
+import { sha256 } from '@utils/crypto';
 import type { User, UserRole } from '@prisma/client';
 
 export interface TokenPair {
@@ -156,22 +156,10 @@ export class AuthService {
   async refreshToken(refreshToken: string): Promise<TokenPair> {
     const refreshTokenHash = sha256(refreshToken);
 
-    // Verify refresh token exists in database.
-    // NOTE: In this workspace the Prisma client may not yet include `tokenHash` (migration pending),
-    // so we try legacy lookup first and then attempt a best-effort hash lookup.
-    let storedToken = await prisma.refreshToken.findFirst({
-      where: { token: refreshToken } as any,
-    } as any);
-
-    if (!storedToken) {
-      try {
-        storedToken = await prisma.refreshToken.findFirst({
-          where: { tokenHash: refreshTokenHash } as any,
-        } as any);
-      } catch {
-        // ignore - client doesn't have tokenHash yet
-      }
-    }
+    // Verify refresh token exists in database by looking up the hash
+    const storedToken = await prisma.refreshToken.findFirst({
+      where: { tokenHash: refreshTokenHash },
+    });
 
     if (!storedToken) {
       throw new UnauthorizedError('Invalid refresh token');
@@ -279,7 +267,7 @@ export class AuthService {
         throw new BadRequestError('Too many OTP attempts. Please request a new OTP.');
       }
     } catch (err) {
-      // If we threw BadRequestError above, rethrow. Otherwise allow request.
+      // If we threw BadRequestError above, rethrow. Otherwise, allow request.
       if (err instanceof BadRequestError) throw err;
       logger.warn('OTP attempt rate limit failed (allowing attempt):', err);
     }
