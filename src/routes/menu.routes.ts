@@ -13,26 +13,10 @@ import {
 
 const router = Router();
 
-// ==================== PUBLIC ROUTES ====================
-
-// Get full menu for a restaurant (public)
-router.get('/:restaurantId', optionalAuth, menuController.getFullMenu);
-
-// Get menu items with filtering (public)
-router.get('/items', optionalAuth, menuController.getMenuItems);
-
-// Get single menu item (public)
-router.get('/items/:id', optionalAuth, menuController.getMenuItemById);
-
 // ==================== CATEGORY ROUTES ====================
-
-// Get categories (public for active, staff for all)
+// Static category routes first
 router.get('/categories', optionalAuth, menuController.getCategories);
 
-// Get category by ID
-router.get('/categories/:id', optionalAuth, menuController.getCategoryById);
-
-// Create category (staff/admin only)
 router.post(
     '/categories',
     authenticate,
@@ -41,7 +25,9 @@ router.post(
     menuController.createCategory
 );
 
-// Update category (staff/admin only)
+// Category with ID parameter
+router.get('/categories/:id', optionalAuth, menuController.getCategoryById);
+
 router.patch(
     '/categories/:id',
     authenticate,
@@ -50,7 +36,6 @@ router.patch(
     menuController.updateCategory
 );
 
-// Delete category (admin only)
 router.delete(
     '/categories/:id',
     authenticate,
@@ -59,17 +44,7 @@ router.delete(
 );
 
 // ==================== MENU ITEM ROUTES ====================
-
-// Create menu item (staff/admin only)
-router.post(
-  '/items',
-  authenticate,
-  authorize('STAFF', 'ADMIN'),
-  validate(createMenuItemSchema),
-  menuController.createMenuItem
-);
-
-// Create menu item with image upload
+// Most specific item routes first (static paths)
 router.post(
     '/items/with-image',
     authenticate,
@@ -78,16 +53,18 @@ router.post(
     menuController.createMenuItem
 );
 
-// Update menu item (staff/admin only)
-router.patch(
-  '/items/:id',
-  authenticate,
-  authorize('STAFF', 'ADMIN'),
-  validate(updateMenuItemSchema),
-  menuController.updateMenuItem
+// Static "items" path
+router.get('/items', optionalAuth, menuController.getMenuItems);
+
+router.post(
+    '/items',
+    authenticate,
+    authorize('STAFF', 'ADMIN'),
+    validate(createMenuItemSchema),
+    menuController.createMenuItem
 );
 
-// Toggle availability (staff/admin only)
+// Item routes with specific parameter paths (more specific)
 router.patch(
     '/items/:id/availability',
     authenticate,
@@ -96,13 +73,27 @@ router.patch(
     menuController.toggleAvailability
 );
 
-// Delete menu item (admin only)
+// General item ID routes (less specific)
+router.get('/items/:id', optionalAuth, menuController.getMenuItemById);
+
+router.patch(
+    '/items/:id',
+    authenticate,
+    authorize('STAFF', 'ADMIN'),
+    validate(updateMenuItemSchema),
+    menuController.updateMenuItem
+);
+
 router.delete(
     '/items/:id',
     authenticate,
     authorize('ADMIN'),
     menuController.deleteMenuItem
 );
+
+// ==================== RESTAURANT MENU ROUTE ====================
+// Most general route last - catches /:restaurantId
+router.get('/:restaurantId', optionalAuth, menuController.getFullMenu);
 
 export default router;
 

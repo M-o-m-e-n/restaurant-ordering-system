@@ -3,6 +3,7 @@ import { cacheService, CacheService } from './cache.service';
 import { NotFoundError, BadRequestError } from '../utils/errors';
 import { Prisma } from '@prisma/client';
 import { parsePagination } from '../utils/helpers';
+import logger from '../config/logger';
 
 export class MenuService {
   // ==================== CATEGORIES ====================
@@ -33,18 +34,23 @@ export class MenuService {
   /**
    * Get all categories for a restaurant
    */
-  async getCategories(restaurantId: string, includeInactive = false) {
-    // Try cache first
-    const cacheKey = CacheService.keys.categories(restaurantId);
-    const cached = await cacheService.get<any[]>(cacheKey);
+  async getCategories(restaurantId?: string, includeInactive = false) {
+    logger.info(`=============== restaurantId: ${restaurantId}, includeInactive: ${includeInactive}`);
 
-    if (cached && !includeInactive) {
-      return cached;
+    // Try cache first (only when not including inactive and restaurantId is provided)
+    if (!includeInactive && restaurantId) {
+      const cacheKey = CacheService.keys.categories(restaurantId);
+      const cached = await cacheService.get<any[]>(cacheKey);
+
+      if (cached !== null) {
+        logger.info(`Returning cached categories: ${cached.length}`);
+        return cached;
+      }
     }
 
     const categories = await prisma.menuCategory.findMany({
       where: {
-        restaurantId,
+        ...(restaurantId ? { restaurantId } : {}),
         ...(includeInactive ? {} : { isActive: true }),
       },
       include: {
@@ -57,8 +63,11 @@ export class MenuService {
       orderBy: { sortOrder: 'asc' },
     });
 
-    // Cache if not including inactive
-    if (!includeInactive) {
+    logger.info(`Fetched categories from DB: ${categories.length}`);
+
+    // Cache if not including inactive and restaurantId is provided
+    if (!includeInactive && restaurantId) {
+      const cacheKey = CacheService.keys.categories(restaurantId);
       await cacheService.set(cacheKey, categories, 300); // 5 minutes
     }
 
@@ -347,7 +356,7 @@ export class MenuService {
     const cacheKey = CacheService.keys.menu(restaurantId);
     const cached = await cacheService.get(cacheKey);
 
-    if (cached) {
+    if (cached !== null) {
       return cached;
     }
 
