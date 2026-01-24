@@ -3,15 +3,15 @@ import argon2 from 'argon2';
 import prisma from '../config/database';
 import redis from '../config/redis';
 import config from '../config';
-import { logger } from '@config/logger';
+import { logger } from '../config/logger';
 import {
   UnauthorizedError,
   BadRequestError,
   ConflictError,
   NotFoundError
-} from '@utils/errors';
-import { generateOTP } from '@utils/helpers';
-import { sha256 } from '@utils/crypto';
+} from '../utils/errors';
+import { generateOTP } from '../utils/helpers';
+import { sha256 } from '../utils/crypto';
 import type { User, UserRole } from '@prisma/client';
 
 export interface TokenPair {

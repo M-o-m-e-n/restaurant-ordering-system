@@ -80,17 +80,14 @@ describe('AuthService security hardening', () => {
     expect(args.data.token).toBeUndefined();
   });
 
-  test('refreshToken looks up by tokenHash (and supports legacy token)', async () => {
-    (prisma.refreshToken.findFirst as jest.Mock)
-      .mockResolvedValueOnce(null) // legacy token lookup
-      .mockResolvedValueOnce({
-        id: 'rt1',
-        token: null,
-        tokenHash: 'hash',
-        userId: 'u1',
-        expiresAt: new Date(Date.now() + 60_000),
-        createdAt: new Date(),
-      });
+  test('refreshToken looks up by tokenHash', async () => {
+    (prisma.refreshToken.findFirst as jest.Mock).mockResolvedValueOnce({
+      id: 'rt1',
+      tokenHash: 'hash',
+      userId: 'u1',
+      expiresAt: new Date(Date.now() + 60_000),
+      createdAt: new Date(),
+    });
     (prisma.user.findUnique as jest.Mock).mockResolvedValue({
       id: 'u1',
       email: 'a@b.com',
@@ -106,7 +103,11 @@ describe('AuthService security hardening', () => {
     const service = new AuthService();
     await service.refreshToken('refresh.jwt.token');
 
-    expect(prisma.refreshToken.findFirst).toHaveBeenCalledTimes(2);
+    // First lookup should be by tokenHash
+    expect(prisma.refreshToken.findFirst).toHaveBeenCalledTimes(1);
+    expect((prisma.refreshToken.findFirst as jest.Mock).mock.calls[0][0]).toMatchObject({
+      where: { tokenHash: expect.any(String) },
+    });
   });
 
   test('forgotPassword rate limits OTP requests per email (silent)', async () => {
