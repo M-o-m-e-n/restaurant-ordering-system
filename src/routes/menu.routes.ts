@@ -4,11 +4,11 @@ import { authenticate, authorize, optionalAuth } from '../middlewares/auth.middl
 import validate from '../middlewares/validate.middleware';
 import { upload } from '../config/cloudinary';
 import {
-  createCategorySchema,
-  updateCategorySchema,
-  createMenuItemSchema,
-  updateMenuItemSchema,
-  toggleAvailabilitySchema,
+    createCategorySchema,
+    updateCategorySchema,
+    createMenuItemSchema,
+    updateMenuItemSchema,
+    toggleAvailabilitySchema,
 } from '../validators/menu.validator';
 
 const router = Router();
@@ -34,28 +34,28 @@ router.get('/categories/:id', optionalAuth, menuController.getCategoryById);
 
 // Create category (staff/admin only)
 router.post(
-  '/categories',
-  authenticate,
-  authorize('STAFF', 'ADMIN'),
-  validate(createCategorySchema),
-  menuController.createCategory
+    '/categories',
+    authenticate,
+    authorize('STAFF', 'ADMIN'),
+    validate(createCategorySchema),
+    menuController.createCategory
 );
 
 // Update category (staff/admin only)
 router.patch(
-  '/categories/:id',
-  authenticate,
-  authorize('STAFF', 'ADMIN'),
-  validate(updateCategorySchema),
-  menuController.updateCategory
+    '/categories/:id',
+    authenticate,
+    authorize('STAFF', 'ADMIN'),
+    validate(updateCategorySchema),
+    menuController.updateCategory
 );
 
 // Delete category (admin only)
 router.delete(
-  '/categories/:id',
-  authenticate,
-  authorize('ADMIN'),
-  menuController.deleteCategory
+    '/categories/:id',
+    authenticate,
+    authorize('ADMIN'),
+    menuController.deleteCategory
 );
 
 // ==================== MENU ITEM ROUTES ====================
@@ -71,11 +71,11 @@ router.post(
 
 // Create menu item with image upload
 router.post(
-  '/items/with-image',
-  authenticate,
-  authorize('STAFF', 'ADMIN'),
-  upload.single('image'),
-  menuController.createMenuItem
+    '/items/with-image',
+    authenticate,
+    authorize('STAFF', 'ADMIN'),
+    upload.single('image'),
+    menuController.createMenuItem
 );
 
 // Update menu item (staff/admin only)
@@ -89,19 +89,19 @@ router.patch(
 
 // Toggle availability (staff/admin only)
 router.patch(
-  '/items/:id/availability',
-  authenticate,
-  authorize('STAFF', 'ADMIN'),
-  validate(toggleAvailabilitySchema),
-  menuController.toggleAvailability
+    '/items/:id/availability',
+    authenticate,
+    authorize('STAFF', 'ADMIN'),
+    validate(toggleAvailabilitySchema),
+    menuController.toggleAvailability
 );
 
 // Delete menu item (admin only)
 router.delete(
-  '/items/:id',
-  authenticate,
-  authorize('ADMIN'),
-  menuController.deleteMenuItem
+    '/items/:id',
+    authenticate,
+    authorize('ADMIN'),
+    menuController.deleteMenuItem
 );
 
 export default router;
